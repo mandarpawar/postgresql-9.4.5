@@ -897,6 +897,14 @@ RelationBuildDesc(Oid targetRelId, bool insertIt)
 	relation->rd_isnailed = false;
 	relation->rd_createSubid = InvalidSubTransactionId;
 	relation->rd_newRelfilenodeSubid = InvalidSubTransactionId;
+
+    /* Mandar: added for NODB project */
+    char * relname = RelationGetRelationName(relation);
+    if( strlen(relname) >= 3 && relname[0]=='c' && relname[1]=='s' && relname[2]=='v')
+    {
+        relation->rd_iscsv = 1;
+    }
+    // *Mandar
 	switch (relation->rd_rel->relpersistence)
 	{
 		case RELPERSISTENCE_UNLOGGED:
@@ -1715,7 +1723,7 @@ RelationDecrementReferenceCount(Relation rel)
 {
 	Assert(rel->rd_refcnt > 0);
 	rel->rd_refcnt -= 1;
-	if (!IsBootstrapProcessingMode())
+    if (!IsBootstrapProcessingMode())
 		ResourceOwnerForgetRelationRef(CurrentResourceOwner, rel);
 }
 
@@ -2786,6 +2794,13 @@ RelationBuildLocalRelation(const char *relname,
 	 * allocate a new relation descriptor and fill in basic state fields.
 	 */
 	rel = (Relation) palloc0(sizeof(RelationData));
+
+    /* Mandar: added for NODB project */
+    if( strlen(relname) >= 3 && relname[0]=='c' && relname[1]=='s' && relname[2]=='v')
+    {
+        rel->rd_iscsv = 1;
+    }
+    // *Mandar
 
 	/* make sure relation is marked as having no open file yet */
 	rel->rd_smgr = NULL;

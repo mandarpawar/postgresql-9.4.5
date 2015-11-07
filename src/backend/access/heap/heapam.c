@@ -70,6 +70,7 @@
 #include "utils/snapmgr.h"
 #include "utils/syscache.h"
 #include "utils/tqual.h"
+#include "funcapi.h"
 
 
 /* GUC variable */
@@ -415,6 +416,124 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 	Assert(ntup <= MaxHeapTuplesPerPage);
 	scan->rs_ntuples = ntup;
 }
+
+//Mandar
+
+//We need to pass size of chartuple as well
+static void csvgetline( FILE *file, char *chartuple, int *iRowNum, int size)
+{
+
+    int i=1,read=0;
+
+    if(fgets(chartuple,size,file)==NULL)
+    {
+        return;
+    }
+
+    while( i< (*iRowNum)+1 )
+    {
+        if(fgets(chartuple,size,file)==NULL )
+        {
+            MemSet(chartuple,'\0',size);
+            break;
+        }
+        i++;
+    }
+
+
+   //if(iRowIndex <= 2)
+   //     sprintf(chartuple,"mandar,pawar,a,b,c\n");
+   // else
+   //     chartuple = NULL;
+
+    (*iRowNum)++;
+
+    return;
+}
+
+static void csv_heapgettup(HeapScanDesc scan,
+           ScanDirection dir,
+           int nkeys,
+           ScanKey key)
+{
+    HeapTuple	tuple = &(scan->rs_ctup);
+    char *filename = (char *) palloc0(FILENAME_MAX);       //This is shaky.. we are putting while path in
+    sprintf(filename,"/home/mandar/csvinput/%s",RelationGetRelationName(scan->rs_rd));
+
+    FILE *file = fopen(filename,"r");
+    char *chartuple = NULL;
+    int iNumofAttr = 5;         //This should be read from relation structure..
+    int iAttr_size = 500+1;       //This should be read from relation structure..
+    static int rownum = 0;
+
+    char *linearr[iNumofAttr];
+
+    //Allocate memories
+    int i1=0;
+    for(i1=0; i1<iNumofAttr; i1++)
+        linearr[i1]=(char *)palloc0(iAttr_size);
+
+    chartuple = (char *)palloc0(iNumofAttr*iAttr_size+iNumofAttr+10);
+
+
+    //Read from file.
+    if(!scan->rs_inited) //First call to this function.
+    {
+        scan->rs_inited = true;
+    }
+    else    //Subsequent scans
+    {
+    }
+
+    csvgetline(file,chartuple,&rownum,2500);      //Last parameter should be changed.
+
+    //if(chartuple == NULL) //Tuple of given index not present in the file
+    if(!strlen(chartuple) && chartuple[0]!='\n')
+    {
+        tuple->t_data = NULL;
+        scan->rs_cbuf = InvalidBuffer;
+        scan->rs_cblock = InvalidBlockNumber;
+        scan->rs_inited = false;
+
+        //Increase index
+        scan->rs_cindex =scan->rs_cindex + 1 ;
+        rownum=0;
+    }
+    else //Some csv line found
+    {
+        //parse and store in the array
+        int attr=0;
+        int i=0;
+
+        while(attr < iNumofAttr && chartuple[i]!='\n'){
+            int j=0;
+            //printf("readme-%s---%c\n",record,record[i]);
+            while(chartuple[i]!=',' && chartuple[i]!='\n'){
+                linearr[attr][j++]=chartuple[i++];
+            }
+
+            i++;
+            linearr[attr][j]='\0';
+            attr++;
+        }
+
+        //Form the tuple and return.
+        TupleDesc td = RelationNameGetTupleDesc(RelationGetRelationName(scan->rs_rd));
+        AttInMetadata *md = TupleDescGetAttInMetadata(td);
+        HeapTuple newTuple = BuildTupleFromCStrings(md,linearr);
+        tuple->t_data = newTuple->t_data;
+        tuple->t_len = newTuple->t_len;
+
+        //Increase index
+        scan->rs_cindex =scan->rs_cindex + 1 ;
+    }
+
+
+    fclose(file);
+    return;
+}
+//*Mandar
+
 
 /* ----------------
  *		heapgettup - fetch next heap tuple
@@ -1046,6 +1165,55 @@ relation_open(Oid relationId, LOCKMODE lockmode)
 	return r;
 }
 
+//Mandar
+/*
+bool IsCSVRelation(const RangeVar *relation)
+{
+    bool bRetVal = false;
+
+    char *fullpath = palloc(100);
+    MemSet(fullpath,'\0',100);
+    strncpy(fullpath,"/home/mandar/csvinput/",22);
+    strcpy(fullpath+22,relation->relname);
+    //printf("Fullpath is %s \n",fullpath);
+
+    if(access( fullpath, F_OK ) != -1 )
+    {
+        //CSV file exists
+        bRetVal = true;
+        //printf("CSV file exits \n");
+    }
+    return bRetVal;
+}
+
+
+//Assumption: csv file is there.. So check beforehand..
+Relation csv_relation_open(const RangeVar *relation, LOCKMODE lockmode)
+{
+
+    Relation r = NULL;
+
+    r = (Relation) palloc0(sizeof(RelationData));
+
+    //Set fields of relation r
+    //1. rd_rel
+    r->rd_rel = (Form_pg_class) palloc0(sizeof(FormData_pg_class));
+    r->rd_rel->relkind = RELKIND_RELATION;
+    r->rd_rel->relnatts = 5;  //Hard coded for now.
+    r->rd_rel->relhasoids = false;   //Hard code for now.
+
+    r->rd_att = CreateTemplateTupleDesc(r->rd_rel->relnatts,
+                                               r->rd_rel->relhasoids);
+
+    r->rd_refcnt = 1;
+    r->rd_iscsv = 1;
+
+
+    return r;
+}
+
+// *Mandar
+*/
 /* ----------------
  *		try_relation_open - open any relation by relation OID
  *
@@ -1149,9 +1317,14 @@ relation_openrv_extended(const RangeVar *relation, LOCKMODE lockmode,
 	/* Look up and lock the appropriate relation using namespace search */
 	relOid = RangeVarGetRelid(relation, lockmode, missing_ok);
 
-	/* Return NULL on not-found */
+    //Mandar
+    //if(IsCSVRelation(relation))
+    //    return csv_relation_open(relation, NoLock);
+    //*Mandar
+
+    /* Return NULL on not-found */
 	if (!OidIsValid(relOid))
-		return NULL;
+        return NULL;
 
 	/* Let relation_open do the rest */
 	return relation_open(relOid, NoLock);
@@ -1475,11 +1648,20 @@ heap_getnext(HeapScanDesc scan, ScanDirection direction)
 
 	HEAPDEBUG_1;				/* heap_getnext( info ) */
 
+    //Mandar
+    if(scan->rs_rd->rd_iscsv != 1)
+    {
 	if (scan->rs_pageatatime)
 		heapgettup_pagemode(scan, direction,
 							scan->rs_nkeys, scan->rs_key);
 	else
 		heapgettup(scan, direction, scan->rs_nkeys, scan->rs_key);
+    }
+    else //This is new
+    {
+        csv_heapgettup(scan, direction, scan->rs_nkeys, scan->rs_key);
+    }
+    //*Mandar
 
 	if (scan->rs_ctup.t_data == NULL)
 	{

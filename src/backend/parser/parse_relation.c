@@ -958,6 +958,21 @@ parserOpenTable(ParseState *pstate, const RangeVar *relation, int lockmode)
 	rel = heap_openrv_extended(relation, lockmode, true);
 	if (rel == NULL)
 	{
+
+        //Mandar
+        char *fullpath = palloc(100);
+        MemSet(fullpath,'\0',100);
+        strncpy(fullpath,"/home/mandar/csvinput/",22);
+        strcpy(fullpath+22,relation->relname);
+        printf("Fullpath is %s \n",fullpath);
+
+        if(access( fullpath, F_OK ) != -1 )
+        {
+            //CSV file exists
+            printf("CSV file exits \n");
+        }
+        //**Mandar
+
 		if (relation->schemaname)
 			ereport(ERROR,
 					(errcode(ERRCODE_UNDEFINED_TABLE),

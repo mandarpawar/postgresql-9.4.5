@@ -81,6 +81,8 @@ typedef struct HeapUpdateFailureData
 
 /* in heap/heapam.c */
 extern Relation relation_open(Oid relationId, LOCKMODE lockmode);
+//extern Relation csv_relation_open(const RangeVar *relation, LOCKMODE lockmode);  //Mandar
+//extern bool IsCSVRelation(const RangeVar *relation);   //Mandar
 extern Relation try_relation_open(Oid relationId, LOCKMODE lockmode);
 extern Relation relation_openrv(const RangeVar *relation, LOCKMODE lockmode);
 extern Relation relation_openrv_extended(const RangeVar *relation,

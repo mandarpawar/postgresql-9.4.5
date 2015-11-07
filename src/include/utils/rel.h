@@ -183,6 +183,8 @@ typedef struct RelationData
 
 	/* use "struct" here to avoid needing to include pgstat.h: */
 	struct PgStat_TableStatus *pgstat_info;		/* statistics collection area */
+    int rd_iscsv;     //Mandar: added for NODB
+
 } RelationData;
 
 /*
