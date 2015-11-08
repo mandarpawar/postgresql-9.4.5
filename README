@@ -1,6 +1,20 @@
 PostgreSQL Database Management System
 =====================================
 
+INSTALLATION INSTRUCTIONS
+-------------------------
+For the initial configuration before make, using the following saves a lot of sweat later on, to go and edit a lot of things in the postgresql.conf file.
+
+./configure --prefix=/home/bhavesh/pgsql --with-pgport=9432 --with-system-tzdata=/usr/share/zoneinfo --enable-debug --enable-cassert --enable-depend
+
+Here, /home/bhavesh/pgsql is my postgres installation directory.
+
+It is also useful to export the variable PGDATA
+
+EXPORT PGDATA=/home/bhavesh/pgsql/data
+
+GENERAL INFORMATION
+-------------------
 This directory contains the source code distribution of the PostgreSQL
 database management system.
 
