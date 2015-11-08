@@ -960,17 +960,18 @@ parserOpenTable(ParseState *pstate, const RangeVar *relation, int lockmode)
 	{
 
         //Mandar
+        /*
         char *fullpath = palloc(100);
         MemSet(fullpath,'\0',100);
-        strncpy(fullpath,"/home/mandar/csvinput/",22);
-        strcpy(fullpath+22,relation->relname);
+        strncpy(fullpath,"/home/ajay/cs631mandar/csvinput/",32);
+        strcpy(fullpath+32,relation->relname);
         printf("Fullpath is %s \n",fullpath);
 
         if(access( fullpath, F_OK ) != -1 )
         {
             //CSV file exists
             printf("CSV file exits \n");
-        }
+        }*/
         //**Mandar
 
 		if (relation->schemaname)
