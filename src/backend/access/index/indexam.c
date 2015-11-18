@@ -77,6 +77,7 @@
 #include "storage/predicate.h"
 #include "utils/snapmgr.h"
 #include "utils/tqual.h"
+#include "funcapi.h"
 
 
 /* ----------------------------------------------------------------
@@ -484,6 +485,104 @@ index_getnext_tid(IndexScanDesc scan, ScanDirection direction)
 	return &scan->xs_ctup.t_self;
 }
 
+//Mandar:
+//This is where we return tuple according to it's offset in the file.
+HeapTuple csvindex_fetch_heap(IndexScanDesc scan)
+{
+    //HeapTuple tuple;
+    ItemPointer tid = &scan->xs_ctup.t_self;
+    char *filename = (char *) palloc0(FILENAME_MAX);       //This is shaky.. we are putting while path in
+    sprintf(filename,"/home/mandar/csvinput/%s",RelationGetRelationName(scan->heapRelation));
+    FILE *file = fopen(filename,"r");
+    int32 offset=0;
+    char *chartuple = NULL;
+    int iNumofAttr = 5;
+    int iAttr_size = 500+1;
+    int32 size = iNumofAttr*iAttr_size + iNumofAttr + 10;
+    char *linearr[iNumofAttr];
+
+    offset = tid->ip_blkid.bi_hi * 65535;
+    offset += tid->ip_posid;
+
+    //Allocate memory
+    int i1=0;
+    for(i1=0; i1<iNumofAttr; i1++)
+        linearr[i1]=(char *)palloc0(iAttr_size);
+
+    chartuple = (char *)palloc0(size);
+
+    if(fseek(file,offset, SEEK_SET) != -1)
+    {
+        //First read row.
+        if(fgets(chartuple,size,file)==NULL)
+        {
+            //No data in the file..return null tuple
+            scan->xs_cbuf = InvalidBuffer;
+            scan->xs_ctup.t_data = NULL;
+            //scan->xs_ctup->t_len= newTuple->t_len;
+        }
+        else
+        {
+            //Parse and store in the array.
+            if(!strlen(chartuple) && chartuple[0]!='\n')
+            {
+                //Return null tuple..
+                scan->xs_cbuf = InvalidBuffer;
+                scan->xs_ctup.t_data = NULL;
+                //scan->xs_ctup->t_len= newTuple->t_len;
+            }
+            else
+            {
+                //Form tuple.
+                int attr=0;
+                int i=0;
+                while(attr < iNumofAttr && chartuple[i]!='\n')
+                {
+                    int j=0;
+                    //printf("readme-%s---%c\n",record,record[i]);
+                    while(chartuple[i]!=',' && chartuple[i]!='\n')
+                    {
+                        linearr[attr][j++]=chartuple[i++];
+                    }
+                    i++;
+                    linearr[attr][j]='\0';
+                    attr++;
+                }
+                TupleDesc td = RelationNameGetTupleDesc(RelationGetRelationName(scan->heapRelation));
+                AttInMetadata *md = TupleDescGetAttInMetadata(td);
+                HeapTuple newTuple = BuildTupleFromCStrings(md,linearr);
+                scan->xs_cbuf = InvalidBuffer;
+                scan->xs_ctup.t_data = newTuple->t_data;
+                scan->xs_ctup.t_len= newTuple->t_len;
+                //tuple->t_data = newTuple->t_data;
+                //tuple->t_len = newTuple->t_len;
+                //tuple->t_csvoffset = offset;
+
+                //check if tuple is correct as per index definition.
+
+                //if correct tuple then return the tuple else return null tuple.
+
+            }
+
+        }
+
+    }
+    else //Seek failed return null tuple..
+    {
+        scan->xs_cbuf = InvalidBuffer;
+        scan->xs_ctup.t_data = NULL;
+        //scan->xs_ctup->t_len= newTuple->t_len;
+    }
+
+    if(file)
+        fclose(file);
+
+    return &scan->xs_ctup;
+}
+
+//*Mandar
+
+
 /* ----------------
  *		index_fetch_heap - get the scan's next heap tuple
  *
@@ -611,7 +710,17 @@ index_getnext(IndexScanDesc scan, ScanDirection direction)
 		 * If we don't find anything, loop around and grab the next TID from
 		 * the index.
 		 */
-		heapTuple = index_fetch_heap(scan);
+        //Mandar
+        if(scan->heapRelation->rd_iscsv == 1)   //Mandar: this is NODB
+        {
+            heapTuple = csvindex_fetch_heap(scan);
+        }
+        else
+        {
+            heapTuple = index_fetch_heap(scan);
+        }
+        //*Mandar
+
 		if (heapTuple != NULL)
 			return heapTuple;
 	}

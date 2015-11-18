@@ -175,7 +175,19 @@ btbuildCallback(Relation index,
 
 	/* form an index tuple and point it at the heap tuple */
 	itup = index_form_tuple(RelationGetDescr(index), values, isnull);
-	itup->t_tid = htup->t_self;
+    //Mandar
+    char * indexrelname = RelationGetRelationName(index);
+    if( strlen(indexrelname) >= 3 && indexrelname[0]=='c' && indexrelname[1]=='s' && indexrelname[2]=='v')
+    {
+        itup->t_tid.ip_blkid.bi_hi = htup->t_csvoffset / 65535;
+        itup->t_tid.ip_posid = htup->t_csvoffset % 65535;
+        //itup->t_csvoffset = htup->t_csvoffset;  //Mandar: added for csv file indexing
+    }
+    else//noncsv relation
+    {
+        itup->t_tid = htup->t_self;
+    }
+    //*Mandar
 
 	/*
 	 * insert the index tuple into the appropriate spool file for subsequent

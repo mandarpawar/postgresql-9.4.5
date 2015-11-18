@@ -34,7 +34,7 @@
 
 typedef struct IndexTupleData
 {
-	ItemPointerData t_tid;		/* reference TID to heap tuple */
+    ItemPointerData t_tid;		/* reference TID to heap tuple */
 
 	/* ---------------
 	 * t_info is laid out in the following fashion:
@@ -47,6 +47,7 @@ typedef struct IndexTupleData
 	 */
 
 	unsigned short t_info;		/* various info about tuple */
+    //int t_csvoffset;        //Mandar: stores file offset for csv files.
 
 } IndexTupleData;				/* MORE DATA FOLLOWS AT END OF STRUCT */
 

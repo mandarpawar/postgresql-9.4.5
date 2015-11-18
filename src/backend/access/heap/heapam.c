@@ -420,10 +420,11 @@ heapgetpage(HeapScanDesc scan, BlockNumber page)
 //Mandar
 
 //We need to pass size of chartuple as well
-static void csvgetline( FILE *file, char *chartuple, int *iRowNum, int size)
+static void csvgetline( FILE *file, char *chartuple, int *iRowNum, uint64 *offset, int size)
 {
 
     int i=1,read=0;
+    *offset = ftell(file);
 
     if(fgets(chartuple,size,file)==NULL)
     {
@@ -432,6 +433,7 @@ static void csvgetline( FILE *file, char *chartuple, int *iRowNum, int size)
 
     while( i< (*iRowNum)+1 )
     {
+        *offset = ftell(file);
         if(fgets(chartuple,size,file)==NULL )
         {
             MemSet(chartuple,'\0',size);
@@ -465,6 +467,7 @@ static void csv_heapgettup(HeapScanDesc scan,
     int iNumofAttr = 5;         //This should be read from relation structure..
     int iAttr_size = 500+1;       //This should be read from relation structure..
     static int rownum = 0;
+    uint64 offset=0;
 
     char *linearr[iNumofAttr];
 
@@ -485,12 +488,13 @@ static void csv_heapgettup(HeapScanDesc scan,
     {
     }
 
-    csvgetline(file,chartuple,&rownum,2500);      //Last parameter should be changed.
+    csvgetline(file,chartuple,&rownum,&offset,2500);      //Last parameter should be changed.
 
     //if(chartuple == NULL) //Tuple of given index not present in the file
     if(!strlen(chartuple) && chartuple[0]!='\n')
     {
         tuple->t_data = NULL;
+        //ItemPointerSetInvalid(&(tuple.t_self));
         scan->rs_cbuf = InvalidBuffer;
         scan->rs_cblock = InvalidBlockNumber;
         scan->rs_inited = false;
@@ -523,7 +527,7 @@ static void csv_heapgettup(HeapScanDesc scan,
         HeapTuple newTuple = BuildTupleFromCStrings(md,linearr);
         tuple->t_data = newTuple->t_data;
         tuple->t_len = newTuple->t_len;
-
+        tuple->t_csvoffset = offset;
         //Increase index
         scan->rs_cindex =scan->rs_cindex + 1 ;
     }
@@ -1651,11 +1655,11 @@ heap_getnext(HeapScanDesc scan, ScanDirection direction)
     //Mandar
     if(scan->rs_rd->rd_iscsv != 1)
     {
-	if (scan->rs_pageatatime)
-		heapgettup_pagemode(scan, direction,
-							scan->rs_nkeys, scan->rs_key);
-	else
-		heapgettup(scan, direction, scan->rs_nkeys, scan->rs_key);
+        if (scan->rs_pageatatime)
+            heapgettup_pagemode(scan, direction,
+                                scan->rs_nkeys, scan->rs_key);
+        else
+            heapgettup(scan, direction, scan->rs_nkeys, scan->rs_key);
     }
     else //This is new
     {

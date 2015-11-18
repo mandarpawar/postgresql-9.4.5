@@ -38,6 +38,7 @@ typedef struct ItemPointerData
 {
 	BlockIdData ip_blkid;
 	OffsetNumber ip_posid;
+    //uint64 t_csvoffset;         //Mandar
 }
 
 #ifdef __arm__

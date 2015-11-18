@@ -61,7 +61,8 @@ typedef MinimalTupleData *MinimalTuple;
  */
 typedef struct HeapTupleData
 {
-	uint32		t_len;			/* length of *t_data */
+    uint64      t_csvoffset;    //Mandar: used to store byte offset within file.
+    uint32		t_len;			/* length of *t_data */
 	ItemPointerData t_self;		/* SelfItemPointer */
 	Oid			t_tableOid;		/* table the tuple came from */
 	HeapTupleHeader t_data;		/* -> tuple header and data */

@@ -960,7 +960,7 @@ parserOpenTable(ParseState *pstate, const RangeVar *relation, int lockmode)
 	{
 
         //Mandar
-        char *fullpath = palloc(100);
+        /*char *fullpath = palloc(100);
         MemSet(fullpath,'\0',100);
         strncpy(fullpath,"/home/mandar/csvinput/",22);
         strcpy(fullpath+22,relation->relname);
@@ -970,7 +970,7 @@ parserOpenTable(ParseState *pstate, const RangeVar *relation, int lockmode)
         {
             //CSV file exists
             printf("CSV file exits \n");
-        }
+        }*/
         //**Mandar
 
 		if (relation->schemaname)

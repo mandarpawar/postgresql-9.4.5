@@ -2194,7 +2194,8 @@ IndexBuildHeapScan(Relation heapRelation,
 		 * tuple per HOT-chain --- else we could create more than one index
 		 * entry pointing to the same root tuple.
 		 */
-		if (scan->rs_cblock != root_blkno)
+        if (scan->rs_rd->rd_iscsv != 1 && scan->rs_cblock != root_blkno)    //Mandar
+        //if (scan->rs_cblock != root_blkno)
 		{
 			Page		page = BufferGetPage(scan->rs_cbuf);
 
@@ -2205,7 +2206,8 @@ IndexBuildHeapScan(Relation heapRelation,
 			root_blkno = scan->rs_cblock;
 		}
 
-		if (snapshot == SnapshotAny)
+        if (scan->rs_rd->rd_iscsv != 1 && snapshot == SnapshotAny)      //Mandar
+        //if (snapshot == SnapshotAny)
 		{
 			/* do our own time qual check */
 			bool		indexIt;
