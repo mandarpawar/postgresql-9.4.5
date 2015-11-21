@@ -460,77 +460,94 @@ static void csv_heapgettup(HeapScanDesc scan,
 {
     HeapTuple	tuple = &(scan->rs_ctup);
     char *filename = (char *) palloc0(FILENAME_MAX);       //This is shaky.. we are putting while path in
-    sprintf(filename,"%s/csvinput/%s",getenv("HOME"),RelationGetRelationName(scan->rs_rd)); /* Bhavesh: Correct the path */
+    //uint64 offset=0;
+    sprintf(filename,"%s/csvinput/%s",getenv("HOME"),RelationGetRelationName(scan->rs_rd));
 
     FILE *file = fopen(filename,"r");
-    char *chartuple = NULL;
-    int iNumofAttr = 5;         //This should be read from relation structure..
-    int iAttr_size = 500+1;       //This should be read from relation structure..
-    static int rownum = 0;
-    uint64 offset=0;
-
-    char *linearr[iNumofAttr];
-
-    //Allocate memories
-    int i1=0;
-    for(i1=0; i1<iNumofAttr; i1++)
-        linearr[i1]=(char *)palloc0(iAttr_size);
-
-    chartuple = (char *)palloc0(iNumofAttr*iAttr_size+iNumofAttr+10);
-
-
-    //Read from file.
-    if(!scan->rs_inited) //First call to this function.
+    if(file!=NULL)
     {
-        scan->rs_inited = true;
-    }
-    else    //Subsequent scans
-    {
-    }
+        char *chartuple = NULL;
+        int iNumofAttr = scan->rs_rd->rd_rel->relnatts;         //This should be read from relation structure..
+        int iAttr_size = 500+1;       //This should be read from relation structure..
+        static int rownum = 0;
 
-    csvgetline(file,chartuple,&rownum,&offset,2500);      //Last parameter should be changed.
 
-    //if(chartuple == NULL) //Tuple of given index not present in the file
-    if(!strlen(chartuple) && chartuple[0]!='\n')
-    {
-        tuple->t_data = NULL;
-        //ItemPointerSetInvalid(&(tuple.t_self));
-        scan->rs_cbuf = InvalidBuffer;
-        scan->rs_cblock = InvalidBlockNumber;
-        scan->rs_inited = false;
+        char *linearr[iNumofAttr];
 
-        //Increase index
-        scan->rs_cindex =scan->rs_cindex + 1 ;
-        rownum=0;
-    }
-    else //Some csv line found
-    {
-        //parse and store in the array
-        int attr=0;
-        int i=0;
+        //Allocate memories
+        int i1=0;
+        for(i1=0; i1<iNumofAttr; i1++)
+            linearr[i1]=(char *)palloc0(iAttr_size);
 
-        while(attr < iNumofAttr && chartuple[i]!='\n'){
-            int j=0;
-            //printf("readme-%s---%c\n",record,record[i]);
-            while(chartuple[i]!=',' && chartuple[i]!='\n'){
-                linearr[attr][j++]=chartuple[i++];
-            }
+        chartuple = (char *)palloc0(iNumofAttr*iAttr_size+iNumofAttr+10);
 
-            i++;
-            linearr[attr][j]='\0';
-            attr++;
+
+        //Read from file.
+        if(!scan->rs_inited) //First call to this function.
+        {
+            scan->rs_inited = true;
+        }
+        else    //Subsequent scans
+        {
         }
 
-        //Form the tuple and return.
-        TupleDesc td = RelationNameGetTupleDesc(RelationGetRelationName(scan->rs_rd));
-        AttInMetadata *md = TupleDescGetAttInMetadata(td);
-        HeapTuple newTuple = BuildTupleFromCStrings(md,linearr);
-        tuple->t_data = newTuple->t_data;
-        tuple->t_len = newTuple->t_len;
-        tuple->t_csvoffset = offset;
-        //Increase index
-        scan->rs_cindex =scan->rs_cindex + 1 ;
+
+        csvgetline(file,chartuple,&rownum,2500);      //Last parameter should be changed.
+
+        //if(chartuple == NULL) //Tuple of given index not present in the file
+        if(!strlen(chartuple) && chartuple[0]!='\n')
+        {
+            tuple->t_data = NULL;
+            scan->rs_cbuf = InvalidBuffer;
+            scan->rs_cblock = InvalidBlockNumber;
+            scan->rs_inited = false;
+
+            //Increase index
+            scan->rs_cindex =scan->rs_cindex + 1 ;
+            rownum=0;
+
+        }
+        else //Some csv line found
+        {
+            //parse and store in the array
+            int attr=0;
+            int i=0;
+
+            while(attr < iNumofAttr && chartuple[i]!='\n'){
+                int j=0;
+                //printf("readme-%s---%c\n",record,record[i]);
+                while(chartuple[i]!=',' && chartuple[i]!='\n'){
+                    linearr[attr][j++]=chartuple[i++];
+                }
+
+                i++;
+                linearr[attr][j]='\0';
+                attr++;
+            }
+
+            //Form the tuple and return.
+            TupleDesc td = RelationNameGetTupleDesc(RelationGetRelationName(scan->rs_rd));
+            AttInMetadata *md = TupleDescGetAttInMetadata(td);
+            HeapTuple newTuple = BuildTupleFromCStrings(md,linearr);
+            tuple->t_data = newTuple->t_data;
+            tuple->t_len = newTuple->t_len;
+
+            //Increase index
+            scan->rs_cindex =scan->rs_cindex + 1 ;
+        }
+
     }
+    else    //File Pointer NULL.. then return NULL tuple
+    {
+            tuple->t_data = NULL;
+            scan->rs_cbuf = InvalidBuffer;
+            scan->rs_cblock = InvalidBlockNumber;
+            scan->rs_inited = false;
+            //Increase index
+            scan->rs_cindex =scan->rs_cindex + 1 ;
+            return;
+    }
+
 
 
     fclose(file);
@@ -1177,7 +1194,7 @@ bool IsCSVRelation(const RangeVar *relation)
 
     char *fullpath = palloc(100);
     MemSet(fullpath,'\0',100);
-    strncpy(fullpath,"/home/mandar/csvinput/",22);
+    strncpy(fullpath,"/home/ajay/cs631mandar/csvinput/",22);
     strcpy(fullpath+22,relation->relname);
     //printf("Fullpath is %s \n",fullpath);
 
