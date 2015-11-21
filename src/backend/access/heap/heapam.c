@@ -460,7 +460,7 @@ static void csv_heapgettup(HeapScanDesc scan,
 {
     HeapTuple	tuple = &(scan->rs_ctup);
     char *filename = (char *) palloc0(FILENAME_MAX);       //This is shaky.. we are putting while path in
-    //uint64 offset=0;
+    uint64 offset=0;
     sprintf(filename,"%s/csvinput/%s",getenv("HOME"),RelationGetRelationName(scan->rs_rd));
 
     FILE *file = fopen(filename,"r");
@@ -492,7 +492,7 @@ static void csv_heapgettup(HeapScanDesc scan,
         }
 
 
-        csvgetline(file,chartuple,&rownum,2500);      //Last parameter should be changed.
+        csvgetline(file,chartuple,&rownum,&offset,2500);      //Last parameter should be changed.
 
         //if(chartuple == NULL) //Tuple of given index not present in the file
         if(!strlen(chartuple) && chartuple[0]!='\n')
@@ -531,7 +531,7 @@ static void csv_heapgettup(HeapScanDesc scan,
             HeapTuple newTuple = BuildTupleFromCStrings(md,linearr);
             tuple->t_data = newTuple->t_data;
             tuple->t_len = newTuple->t_len;
-
+            tuple->t_csvoffset = offset;
             //Increase index
             scan->rs_cindex =scan->rs_cindex + 1 ;
         }
@@ -543,7 +543,7 @@ static void csv_heapgettup(HeapScanDesc scan,
             scan->rs_cbuf = InvalidBuffer;
             scan->rs_cblock = InvalidBlockNumber;
             scan->rs_inited = false;
-            //Increase index
+            //Increase index..doesn't matter here.
             scan->rs_cindex =scan->rs_cindex + 1 ;
             return;
     }

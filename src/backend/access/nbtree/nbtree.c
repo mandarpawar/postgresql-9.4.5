@@ -181,7 +181,6 @@ btbuildCallback(Relation index,
     {
         itup->t_tid.ip_blkid.bi_hi = htup->t_csvoffset / 65535;
         itup->t_tid.ip_posid = htup->t_csvoffset % 65535;
-        //itup->t_csvoffset = htup->t_csvoffset;  //Mandar: added for csv file indexing
     }
     else//noncsv relation
     {
