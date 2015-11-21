@@ -492,7 +492,7 @@ HeapTuple csvindex_fetch_heap(IndexScanDesc scan)
     //HeapTuple tuple;
     ItemPointer tid = &scan->xs_ctup.t_self;
     char *filename = (char *) palloc0(FILENAME_MAX);       //This is shaky.. we are putting while path in
-    sprintf(filename,"/home/mandar/csvinput/%s",RelationGetRelationName(scan->heapRelation));
+    sprintf(filename,"%s/csvinput/%s",getenv("HOME"),RelationGetRelationName(scan->heapRelation));
     FILE *file = fopen(filename,"r");
     int32 offset=0;
     char *chartuple = NULL;

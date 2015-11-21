@@ -460,7 +460,7 @@ static void csv_heapgettup(HeapScanDesc scan,
 {
     HeapTuple	tuple = &(scan->rs_ctup);
     char *filename = (char *) palloc0(FILENAME_MAX);       //This is shaky.. we are putting while path in
-    sprintf(filename,"/home/mandar/csvinput/%s",RelationGetRelationName(scan->rs_rd));
+    sprintf(filename,"%s/csvinput/%s",getenv("HOME"),RelationGetRelationName(scan->rs_rd)); /* Bhavesh: Correct the path */
 
     FILE *file = fopen(filename,"r");
     char *chartuple = NULL;
