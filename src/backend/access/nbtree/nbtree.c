@@ -180,7 +180,8 @@ btbuildCallback(Relation index,
     if( strlen(indexrelname) >= 3 && indexrelname[0]=='c' && indexrelname[1]=='s' && indexrelname[2]=='v')
     {
         itup->t_tid.ip_blkid.bi_hi = htup->t_csvoffset / 65535;
-        itup->t_tid.ip_posid = htup->t_csvoffset % 65535;
+        itup->t_tid.ip_blkid.bi_lo = htup->t_csvoffset % 65535;
+        itup->t_tid.ip_posid = 1;  //This is some non zero value;
     }
     else//noncsv relation
     {

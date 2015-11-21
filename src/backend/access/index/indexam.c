@@ -502,7 +502,7 @@ HeapTuple csvindex_fetch_heap(IndexScanDesc scan)
     char *linearr[iNumofAttr];
 
     offset = tid->ip_blkid.bi_hi * 65535;
-    offset += tid->ip_posid;
+    offset += tid->ip_blkid.bi_lo;
 
     //Allocate memory
     int i1=0;
