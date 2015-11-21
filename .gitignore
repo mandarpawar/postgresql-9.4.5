@@ -1,8 +1,11 @@
+# Miscellaneous
+*.autosave
+
 # Qt Creator project files
-postgres.config*
-postgres.creator*
-postgres.files*
-postgres.includes*
+*.config*
+*.creator*
+*.files*
+*.includes*
 
 # Global excludes across all subdirectories
 *.o
