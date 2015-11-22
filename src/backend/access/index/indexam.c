@@ -494,15 +494,16 @@ HeapTuple csvindex_fetch_heap(IndexScanDesc scan)
     char *filename = (char *) palloc0(FILENAME_MAX);       //This is shaky.. we are putting while path in
     sprintf(filename,"%s/csvinput/%s",getenv("HOME"),RelationGetRelationName(scan->heapRelation));
     FILE *file = fopen(filename,"r");
-    int32 offset=0;
+    int64 offset=0;
     char *chartuple = NULL;
     int iNumofAttr = 5;
     int iAttr_size = 500+1;
     int32 size = iNumofAttr*iAttr_size + iNumofAttr + 10;
     char *linearr[iNumofAttr];
 
-    offset = tid->ip_blkid.bi_hi * 65535;
-    offset += tid->ip_blkid.bi_lo;
+    offset = tid->ip_blkid.bi_hi * 65535 * 65535;
+    offset += tid->ip_blkid.bi_lo * 65535;
+    offset += (tid->ip_posid-1);              //substracting 1 as it was added to make tuplepointer valid assertion work
 
     //Allocate memory
     int i1=0;

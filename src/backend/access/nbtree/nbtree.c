@@ -179,9 +179,11 @@ btbuildCallback(Relation index,
     char * indexrelname = RelationGetRelationName(index);
     if( strlen(indexrelname) >= 3 && indexrelname[0]=='c' && indexrelname[1]=='s' && indexrelname[2]=='v')
     {
-        itup->t_tid.ip_blkid.bi_hi = htup->t_csvoffset / 65535;
-        itup->t_tid.ip_blkid.bi_lo = htup->t_csvoffset % 65535;
-        itup->t_tid.ip_posid = 1;  //This is some non zero value;
+        int64 high_offset=0;
+        high_offset = htup->t_csvoffset / 65535;
+        itup->t_tid.ip_blkid.bi_hi = high_offset / 65535;
+        itup->t_tid.ip_blkid.bi_lo = high_offset % 65535;
+        itup->t_tid.ip_posid = htup->t_csvoffset % 65535 + 1;  //This is some non zero value..used for IsvalidPointer assertion..so adding extra 1;
     }
     else//noncsv relation
     {
