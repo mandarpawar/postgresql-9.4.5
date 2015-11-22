@@ -521,7 +521,10 @@ static void csv_heapgettup(HeapScanDesc scan,
                 }
 
                 i++;
-                linearr[attr][j]='\0';
+                if(j==0)
+                    linearr[attr] = NULL;
+                else
+                    linearr[attr][j]='\0';
                 attr++;
             }
 

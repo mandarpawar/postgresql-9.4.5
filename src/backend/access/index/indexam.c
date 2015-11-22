@@ -496,7 +496,7 @@ HeapTuple csvindex_fetch_heap(IndexScanDesc scan)
     FILE *file = fopen(filename,"r");
     int64 offset=0;
     char *chartuple = NULL;
-    int iNumofAttr = 5;
+    int iNumofAttr = scan->heapRelation->rd_rel->relnatts;
     int iAttr_size = 500+1;
     int32 size = iNumofAttr*iAttr_size + iNumofAttr + 10;
     char *linearr[iNumofAttr];
