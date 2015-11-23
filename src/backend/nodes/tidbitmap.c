@@ -282,7 +282,7 @@ tbm_add_tuples(TIDBitmap *tbm, const ItemPointer tids, int ntids,
 
 		/* safety check to ensure we don't overrun bit array bounds */
 		if (off < 1 || off > MAX_TUPLES_PER_PAGE)
-			elog(ERROR, "tuple offset out of range: %u", off);
+            elog(ERROR, "tuple offset out of range: %u %u", off, MAX_TUPLES_PER_PAGE); /* Bhavesh: Bound to create problems for NoDB */
 
 		if (tbm_page_is_lossy(tbm, blk))
 			continue;			/* whole page is already marked */

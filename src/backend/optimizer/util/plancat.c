@@ -527,6 +527,19 @@ estimate_rel_size(Relation rel, int32 *attr_widths,
 				*allvisfrac = 1;
 			else
 				*allvisfrac = (double) relallvisible / curpages;
+
+            /*
+             * Bhavesh: This is really a hack for NoDB
+             * We already get the number of tuples in the file once an index is created.
+             * So we simply say that the number of pages is equal to the number of tuples
+             * as each tuple access amounts to a text file seek and read in our case.
+             */
+            if (rel->rd_iscsv == 1)
+            {
+                *tuples = reltuples != 0? reltuples: curpages;
+                *allvisfrac = 0;
+            }
+
 			break;
 		case RELKIND_SEQUENCE:
 			/* Sequences always have a known size */
